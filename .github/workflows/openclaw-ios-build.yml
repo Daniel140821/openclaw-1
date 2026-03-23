@@ -17,6 +17,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Install xcodegen
+        run: brew install xcodegen
+
       - name: Setup iOS signing
         run: ./scripts/ios-configure-signing.sh
 
