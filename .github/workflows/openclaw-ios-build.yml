@@ -1,0 +1,48 @@
+name: Build iOS (SideStore)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build iOS (Unsigned IPA)
+        run: |
+          SCHEME_NAME="OpenClaw"
+          PROJECT_FILE=$(find . -name "*.xcodeproj" -maxdepth 2 | head -n 1)
+          
+          echo "📱 正在构建真机 IPA..."
+          
+          xcodebuild build \
+            -project "$PROJECT_FILE" \
+            -scheme "$SCHEME_NAME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build_real \
+            IPHONEOS_DEPLOYMENT_TARGET=17.0 \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+          
+          # 打包 IPA
+          cd build_real/Build/Products/Release-iphoneos/
+          APP_NAME=$(find . -name "*.app" -maxdepth 1 -exec basename {} \;)
+          
+          mkdir -p Payload
+          cp -r "$APP_NAME" Payload/
+          zip -r openclaw-unsigned.ipa Payload
+          mv openclaw-unsigned.ipa ../../../
+          
+          echo "✅ IPA 已生成: openclaw-unsigned.ipa"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenClaw-iOS-Unsigned
+          path: openclaw-unsigned.ipa
+          retention-days: 5
