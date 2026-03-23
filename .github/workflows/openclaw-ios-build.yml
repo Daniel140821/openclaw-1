@@ -11,16 +11,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Setup iOS signing
+        run: ./scripts/ios-configure-signing.sh
+
+      - name: Generate Xcode project
+        run: |
+          cd apps/ios
+          xcodegen generate
+
       - name: Build iOS (Unsigned IPA)
         run: |
-          SCHEME_NAME="OpenClaw"
-          PROJECT_FILE=$(find . -name "*.xcodeproj" -maxdepth 2 | head -n 1)
-          
-          echo "📱 正在构建真机 IPA..."
-          
+          cd apps/ios
           xcodebuild build \
-            -project "$PROJECT_FILE" \
-            -scheme "$SCHEME_NAME" \
+            -project OpenClaw.xcodeproj \
+            -scheme OpenClaw \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build_real \
